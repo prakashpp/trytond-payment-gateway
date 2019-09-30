@@ -229,6 +229,16 @@ class PaymentTransaction(Workflow, ModelSQL, ModelView):
     def default_type():
         return 'charge'
 
+    @classmethod
+    def validate(cls, records):
+        super(PaymentTransaction, cls).validate(records)
+        for record in records:
+            record.validate_amount()
+
+    def validate_amount(self):
+        if self.amount < Decimal('0'):
+            self.raise_user_error('negative_amount')
+
     def get_rec_name(self, name=None):
         """
         Return the most meaningful rec_name
@@ -290,6 +300,7 @@ class PaymentTransaction(Workflow, ModelSQL, ModelView):
             'feature_not_available': 'The feature %s is not avaialable '
                                      'for provider %s',
             'process_only_manual': 'Only manual process can be processed.',
+            'negative_amount': 'The amount to be entered cannot be negative.'
         })
         cls._transitions |= set((
             ('draft', 'in-progress'),
